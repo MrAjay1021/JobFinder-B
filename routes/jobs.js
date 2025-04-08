@@ -9,41 +9,64 @@ const auth = require('../middleware/auth');
 // @access  Private
 router.post('/', auth, async (req, res) => {
   try {
-    const {
-      title,
-      companyName,
-      location,
-      monthlySalary,
-      jobType,
-      remoteOffice,
-      description,
-      skillsRequired
-    } = req.body;
-
-    const job = new Job({
-      title,
-      companyName,
-      location,
-      monthlySalary,
-      jobType,
-      remoteOffice,
-      description,
-      skillsRequired,
+    console.log('Received job data:', req.body);
+    
+    // Map fields from frontend to ensure compatibility
+    const jobData = {
+      title: req.body.title,
+      companyName: req.body.companyName,
+      location: req.body.location,
+      // Handle different field name possibilities for logo
+      logoUrl: req.body.logoUrl || req.body.companyLogoUrl,
+      // Make sure monthlySalary is a number
+      monthlySalary: Number(req.body.monthlySalary) || 0,
+      // Use the jobType sent from frontend - our schema now supports both formats
+      jobType: req.body.jobType,
+      // Handle remote field in different formats
+      remoteOffice: req.body.remoteOffice,
+      isRemote: req.body.isRemote || req.body.remoteOffice === 'Remote',
+      description: req.body.description,
+      aboutCompany: req.body.aboutCompany || req.body.companyName, // Fallback if not provided
+      skillsRequired: req.body.skillsRequired || [],
+      additionalInfo: req.body.additionalInfo,
+      companySize: req.body.companySize || '11-50',
       postedBy: req.user.id
-    });
+    };
 
-    await job.save();
+    const job = new Job(jobData);
+
+    const savedJob = await job.save();
 
     // Add job to user's posted jobs
     await User.findByIdAndUpdate(
       req.user.id,
-      { $push: { postedJobs: job._id } }
+      { $push: { postedJobs: savedJob._id } }
     );
 
-    res.json(job);
+    res.status(201).json(savedJob);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error creating job:', error);
+    
+    // Improved error handling
+    if (error.name === 'ValidationError') {
+      // Handle validation errors specifically
+      const validationErrors = {};
+      
+      // Extract specific validation error messages
+      for (const field in error.errors) {
+        validationErrors[field] = error.errors[field].message;
+      }
+      
+      return res.status(400).json({
+        message: 'Validation error',
+        errors: validationErrors
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
   }
 });
 
@@ -149,12 +172,13 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
-    await job.remove();
+    // Using deleteOne instead of deprecated remove() method
+    await Job.deleteOne({ _id: req.params.id });
 
     // Remove job from user's posted jobs
     await User.findByIdAndUpdate(
       req.user.id,
-      { $pull: { postedJobs: job._id } }
+      { $pull: { postedJobs: req.params.id } }
     );
 
     res.json({ message: 'Job removed' });
