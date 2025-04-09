@@ -10,4 +10,8 @@ services:
       - key: PORT
         value: 10000
       - key: NODE_ENV
-        value: production 
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRE
+        value: 30d 
