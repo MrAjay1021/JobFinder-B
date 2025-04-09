@@ -8,6 +8,7 @@ const JobSchema = new mongoose.Schema({
   companySize: { type: String, default: '11-50' },
   location: { type: String, required: true },
   monthlySalary: { type: Number, required: true },
+  duration: { type: String, default: '6 Months' },
   jobType: { 
     type: String, 
     enum: ["Full Time", "Part Time", "Internship", "Contract", "Freelance", "Full-time", "Part-time"], 
