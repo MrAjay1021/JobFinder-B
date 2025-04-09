@@ -8,8 +8,16 @@ dotenv.config();
 
 const app = express();
 
+// CORS configuration
+const corsOptions = {
+  origin: ['https://mrajay1021s-jobfinder.vercel.app', 'http://localhost:3000', process.env.RENDER_EXTERNAL_URL],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' })); // Increase payload limit for large job descriptions
 
 // MongoDB Connection
