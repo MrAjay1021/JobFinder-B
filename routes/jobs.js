@@ -74,6 +74,8 @@ router.post('/', auth, async (req, res) => {
 // @desc    Get all jobs with filters
 // @access  Public
 router.get('/', async (req, res) => {
+  console.log('GET /api/jobs route hit', { query: req.query });
+  
   try {
     const {
       jobType,
@@ -81,11 +83,14 @@ router.get('/', async (req, res) => {
       location,
       skills,
       minSalary,
-      maxSalary
+      maxSalary,
+      title
     } = req.query;
 
     let query = {};
 
+    // Add title search if provided
+    if (title) query.title = new RegExp(title, 'i');
     if (jobType) query.jobType = jobType;
     if (remoteOffice) query.remoteOffice = remoteOffice;
     if (location) query.location = new RegExp(location, 'i');
@@ -96,13 +101,17 @@ router.get('/', async (req, res) => {
       if (maxSalary) query.monthlySalary.$lte = Number(maxSalary);
     }
 
+    console.log('Job search query:', query);
+
     const jobs = await Job.find(query)
       .populate('postedBy', 'name email')
       .sort({ createdAt: -1 });
 
+    console.log(`Found ${jobs.length} jobs`);
+    
     res.json(jobs);
   } catch (error) {
-    console.error(error.message);
+    console.error('Error in GET /api/jobs:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 });

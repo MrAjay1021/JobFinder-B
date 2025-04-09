@@ -10,7 +10,11 @@ const app = express();
 
 // CORS configuration
 const corsOptions = {
-  origin: ['https://mrajay1021s-jobfinder.vercel.app', 'http://localhost:3000', process.env.RENDER_EXTERNAL_URL],
+  origin: [
+    process.env.FRONTEND_URL || 'https://mrajay1021s-jobfinder.vercel.app',
+    'http://localhost:3000', 
+    'https://jobfinder-backend1021.onrender.com'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
@@ -27,6 +31,20 @@ mongoose.connect(process.env.MONGODB_URI, {
 })
 .then(() => console.log('Connected to MongoDB'))
 .catch((err) => console.error('MongoDB connection error:', err));
+
+// Add a health check route
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'JobFinder API is running',
+    env: {
+      node_env: process.env.NODE_ENV,
+      port: process.env.PORT,
+      frontend_url: process.env.FRONTEND_URL,
+      // Don't expose sensitive info like DB credentials or JWT secret
+    }
+  });
+});
 
 // Routes
 app.use('/api/users', require('./routes/users'));
