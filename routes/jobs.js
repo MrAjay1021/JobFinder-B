@@ -107,6 +107,30 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @route   GET api/jobs/user
+// @desc    Get jobs posted by the authenticated user
+// @access  Private
+router.get('/user', auth, async (req, res) => {
+  try {
+    console.log('Fetching jobs for authenticated user:', { 
+      userId: req.user.id, 
+      userName: req.user.name,
+      userEmail: req.user.email 
+    });
+    
+    const jobs = await Job.find({ postedBy: req.user.id })
+      .populate('postedBy', 'name email')
+      .sort({ createdAt: -1 });
+    
+    console.log(`Found ${jobs.length} jobs for user ${req.user.id}`);
+    
+    res.json(jobs);
+  } catch (error) {
+    console.error('Error fetching user jobs:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   GET api/jobs/:id
 // @desc    Get job by ID
 // @access  Public
