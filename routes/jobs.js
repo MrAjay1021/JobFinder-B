@@ -118,7 +118,32 @@ router.get('/user', auth, async (req, res) => {
       userEmail: req.user.email 
     });
     
-    const jobs = await Job.find({ postedBy: req.user.id })
+    const {
+      jobType,
+      remoteOffice,
+      location,
+      skills,
+      minSalary,
+      maxSalary,
+      title
+    } = req.query;
+
+    // Start with base query that filters by user
+    let query = { postedBy: req.user.id };
+
+    // Add any additional filters
+    if (jobType) query.jobType = jobType;
+    if (remoteOffice) query.remoteOffice = remoteOffice;
+    if (location) query.location = new RegExp(location, 'i');
+    if (title) query.title = new RegExp(title, 'i');
+    if (skills) query.skillsRequired = { $in: skills.split(',') };
+    if (minSalary || maxSalary) {
+      query.monthlySalary = {};
+      if (minSalary) query.monthlySalary.$gte = Number(minSalary);
+      if (maxSalary) query.monthlySalary.$lte = Number(maxSalary);
+    }
+    
+    const jobs = await Job.find(query)
       .populate('postedBy', 'name email')
       .sort({ createdAt: -1 });
     
