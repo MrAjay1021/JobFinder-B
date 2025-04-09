@@ -10,11 +10,7 @@ const app = express();
 
 // CORS configuration
 const corsOptions = {
-  origin: [
-    process.env.FRONTEND_URL || 'https://mrajay1021s-jobfinder.vercel.app',
-    'http://localhost:3000', 
-    'https://jobfinder-backend1021.onrender.com'
-  ],
+  origin: '*', // Allow all origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
